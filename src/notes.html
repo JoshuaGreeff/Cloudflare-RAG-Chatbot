@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI and Notes Interaction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            width: 80%;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        textarea,
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .notes-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .note-item {
+            margin: 5px 0;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .note-item button {
+            background-color: #f44336;
+            margin-left: 10px;
+        }
+
+        .note-item button:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="section" id="ai-section">
+            <h2>Ask AI</h2>
+            <textarea id="user-query" placeholder="Ask a question..."></textarea>
+            <button id="ask-ai">Ask AI</button>
+            <div id="ai-response"></div>
+        </div>
+
+        <div class="section" id="notes-section">
+            <h2>Manage Notes</h2>
+            <textarea id="new-note" placeholder="Write a new note..."></textarea>
+            <button id="add-note">Add Note</button>
+            <ul id="notes-list" class="notes-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        // Function to fetch AI response
+        async function fetchAIResponse(query, messages = []) {
+            const response = await fetch('/', {
+                method: 'POST', 
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ messages, query })
+            });
+
+            const data = await response.json();
+            const aiResponse = data.response || "Error: Unable to generate response.";
+            return aiResponse;
+        }
+
+
+        // Ask AI when the button is clicked
+        document.getElementById('ask-ai').addEventListener('click', async () => {
+            const query = document.getElementById('user-query').value.trim();
+            if (!query) {
+                alert("Please enter a question.");
+                return;
+            }
+
+            const aiResponse = await fetchAIResponse(query);
+            document.getElementById('ai-response').innerHTML = `<strong>AI Response:</strong><p>${aiResponse}</p>`;
+        });
+
+        // Fetch notes from the database
+        async function fetchNotes() {
+            const response = await fetch('/notes.json');
+            const notes = await response.json();
+            const notesList = document.getElementById('notes-list');
+            notesList.innerHTML = '';
+            notes.forEach(note => {
+                const li = document.createElement('li');
+                li.classList.add('note-item');
+                li.innerHTML = `
+                    <span>${note.text}</span>
+                    <button onclick="deleteNote('${note.id}')">Delete</button>
+                `;
+                notesList.appendChild(li);
+            });
+        }
+
+        // Add a new note
+        document.getElementById('add-note').addEventListener('click', async () => {
+            const noteText = document.getElementById('new-note').value.trim();
+            if (!noteText) {
+                alert("Please write a note.");
+                return;
+            }
+
+            await fetch('/notes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: noteText })
+            });
+            document.getElementById('new-note').value = ''; // clear the input
+        });
+
+        // Delete a note
+        async function deleteNote(noteId) {
+            await fetch(`/notes/${noteId}`, {
+                method: 'DELETE',
+            });
+        }
+
+        // Initialize notes list on page load
+        fetchNotes()
+        // and refresh the notes list periodically
+        setInterval(fetchNotes, 5000); 
+    </script>
+</body>
+
+</html>
