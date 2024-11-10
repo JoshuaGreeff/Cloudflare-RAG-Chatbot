@@ -71,8 +71,8 @@ API Documentation
 1. **Installation/Setup**:
    - Clone the repository:
      ```
-     git clone https://github.com/your-repo-name.git
-     cd your-repo-name
+     git clone https://github.com/JoshuaGreeff/Cloudflare-RAG-Chatbot.git
+     cd Cloudflare-RAG-Chatbot
      ```
    - Install dependencies:
      ```
